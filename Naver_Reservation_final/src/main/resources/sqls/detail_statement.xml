@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.min.edu.model.DetailDaoImpl">
+
+
+<resultMap type="pVo" id="productMap">
+    <result column="PRODUCT_ID" property="productId"/>
+    <result column="PRODUCT_NAME" property="productName"/>
+    <result column="P_CATEGORY_ID" property="pCategoryId"/>
+    <result column="ADDRESS" property="address"/>
+    <result column="PHONE" property="phone"/>
+    <result column="OPEN_HOUR" property="openHour"/>
+    <result column="ETC1" property="etc1"/>
+    <result column="ETC2" property="etc2"/>
+    <result column="DESCRIPTION" property="description"/>
+    <result column="LAT" property="lat"/>
+    <result column="LNG" property="lng"/>
+
+    <collection property="fileInfo" ofType="fVo">
+        <result column="FILE_ID" property="fileId"/>
+        <result column="FILE_NAME" property="fileName"/>
+        <result column="SAVE_FILE_NAME" property="saveFileName"/>
+        <result column="DEL_FLAG" property="delFlag"/>
+    </collection>
+</resultMap>
+
+
+
+
+<select id="getProductImg" parameterType="java.lang.String" resultMap="productMap">
+	SELECT fi.FILE_ID ,fi.SAVE_FILE_NAME , p.PRODUCT_ID,
+		PRODUCT_NAME, DESCRIPTION, ETC1, ETC2,
+		ADDRESS, OPEN_HOUR, PHONE,LAT,LNG
+	FROM PRODUCT p JOIN PRODUCT_FILE pf 
+	ON p.PRODUCT_ID = pf.PRODUCT_ID 
+	JOIN FILE_INFO fi 
+	ON fi.FILE_ID =pf.FILE_ID 
+	WHERE P.PRODUCT_ID = #{productId}
+</select>
+
+
+
+</mapper>

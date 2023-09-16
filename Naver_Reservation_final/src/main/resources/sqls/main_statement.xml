@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.min.edu.model.MainDaoImpl">
+	<resultMap type="pVo" id="pMap">
+		<result column="PRODUCT_ID" property="productId"/>
+		<result column="P_CATEGORY_ID" property="pCategoryId"/>
+		<result column="PRODUCT_NAME" property="productName"/>
+		<result column="DESCRIPTION" property="description"/>
+		<collection property="fileInfo" resultMap="fMap"></collection>		
+	</resultMap>
+	<resultMap type="fVo" id="fMap">
+		<result column="SAVE_FILE_NAME" property="saveFileName"/>
+	</resultMap>
+	
+	
+	<select id="getAllEvent" resultType="eVo">
+		SELECT PRODUCT_ID , TITLE , CONTENT , EVENT_IMG 
+			FROM EVENT
+			WHERE DELFLAG = 'N'
+			ORDER BY SEQ
+	</select>
+	
+	<select id="getAllCategory" resultType="cVo">
+		SELECT NVL(pc.P_CATEGORY_ID, 'P000') AS P_CATEGORY_ID, NVL(CATEGORY_NAME, '전체리스트') AS CATEGORY_NAME, COUNT(PRODUCT_ID) AS "COUNT" 
+			FROM PRODUCT_CATEGORY pc LEFT JOIN PRODUCT p 
+			ON pc.P_CATEGORY_ID = p.P_CATEGORY_ID
+			GROUP BY ROLLUP ((pc.P_CATEGORY_ID, CATEGORY_NAME))
+			ORDER BY P_CATEGORY_ID
+	</select>
+	
+	<select id="getAllProduct" resultMap="pMap">
+		SELECT p.PRODUCT_ID AS PRODUCT_ID, P_CATEGORY_ID, PRODUCT_NAME, DESCRIPTION, SAVE_FILE_NAME  
+			FROM (SELECT *
+					FROM (SELECT PRODUCT_ID , P_CATEGORY_ID , PRODUCT_NAME , DESCRIPTION ,
+							ROW_NUMBER() OVER(ORDER BY PRODUCT_ID) AS RN
+							FROM PRODUCT	
+							<if test='!pCategoryId.equals("P000")'>
+								<where>
+								P_CATEGORY_ID = #{pCategoryId}
+								</where>
+							</if>
+								
+								)) p JOIN PRODUCT_FILE pf 
+			ON p.PRODUCT_ID = pf.PRODUCT_ID 
+			JOIN FILE_INFO fi 
+			ON pf.FILE_ID = fi.FILE_ID 
+			WHERE SUBSTR(FILE_NAME, 0, 4) = '업체메인'
+				AND DEL_FLAG = 'N'
+				AND RN BETWEEN #{start} AND #{end}
+	</select>
+</mapper>

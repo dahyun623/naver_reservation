@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+
+<mapper namespace="com.min.edu.model.ReviewDaoImpl">
+
+
+<resultMap type="rVo" id="reviewMap">
+	<result column="PRODUCT_ID" property="productId"/>
+	<result column="PRODUCT_NAME" property="productName"/>
+	<result column="REV_ID" property="revId"/>
+	<result column="EMAIL_ID" property="emailId"/>
+	<result column="CONTENT" property="content"/>
+	<result column="REGDATE" property="regdate"/>
+	<result column="SCORE" property="score"/>
+	<result column="GUBUN" property="gubun"/>
+	<collection property="fileInfo" resultMap="fiMap"/>
+</resultMap>
+<resultMap type="fVo" id="fiMap">
+	<result column="FILE_NAME" property="fileName"/>
+	<result column="SAVE_FILE_NAME" property="saveFileName"/>
+</resultMap>
+
+	<select id="getReviewScore" resultType="rVo">
+		SELECT p.PRODUCT_ID, p.PRODUCT_NAME, COUNT(*) SCORE,
+			ROUND(AVG(SCORE),1) REVIEWAVG
+		FROM REVIEW r JOIN PRODUCT p
+			ON r.PRODUCT_ID = P.PRODUCT_ID
+		WHERE r.PRODUCT_ID = #{productId}
+		GROUP BY p.PRODUCT_ID , PRODUCT_NAME
+	</select>
+
+<select id="getReview" resultMap="reviewMap">
+SELECT REV_ID, EMAIL_ID, CONTENT, REGDATE, SCORE, GUBUN, FILE_NAME, SAVE_FILE_NAME 
+			FROM (
+				SELECT r.REV_ID , SUBSTR(r.EMAIL_ID,0,4)||'****' EMAIL_ID ,
+				r.CONTENT , TO_CHAR(r.REGDATE,'YYYY. MM. DD.') REGDATE , r.SCORE,
+				CASE r.GUBUN WHEN 'A' THEN '예약' ELSE '방문' END GUBUN,
+				fi.FILE_NAME, fi.SAVE_FILE_NAME, ROW_NUMBER () OVER (ORDER BY r.REV_ID DESC) RN
+					FROM REVIEW r LEFT JOIN REVIEW_FILE rf
+					ON r.REV_ID = rf.REV_ID
+					LEFT JOIN FILE_INFO fi
+					ON rf.FILE_ID = fi.FILE_ID
+					WHERE PRODUCT_ID = 2023010001
+			)
+		<![CDATA[WHERE RN <= 5]]> 
+</select> 
+	
+	<select id="getReviewMore" resultMap="reviewMap">
+		SELECT REV_ID, EMAIL_ID, CONTENT, REGDATE, SCORE, GUBUN, FILE_NAME, SAVE_FILE_NAME 
+			FROM (
+				SELECT r.REV_ID , SUBSTR(r.EMAIL_ID,0,4)||'****' EMAIL_ID ,
+				r.CONTENT , TO_CHAR(r.REGDATE,'YYYY. MM. DD.') REGDATE , r.SCORE,
+				CASE r.GUBUN WHEN 'A' THEN '예약' ELSE '방문' END GUBUN,
+				fi.FILE_NAME, fi.SAVE_FILE_NAME, ROW_NUMBER () OVER (ORDER BY r.REV_ID DESC) RN
+					FROM REVIEW r LEFT JOIN REVIEW_FILE rf
+					ON r.REV_ID = rf.REV_ID
+					LEFT JOIN FILE_INFO fi
+					ON rf.FILE_ID = fi.FILE_ID
+					WHERE PRODUCT_ID = #{productId}
+			)
+			WHERE RN BETWEEN #{start} AND #{end}
+	</select>
+	
+	<insert id="setReview">
+	<selectKey resultType="java.lang.String" keyProperty="revId" order="BEFORE">
+		SELECT REVIEW_SEQ.NEXTVAL FROM DUAL
+	</selectKey>
+		INSERT INTO REZ.REVIEW
+			(REV_ID, PRODUCT_ID, EMAIL_ID, CONTENT, REGDATE, SCORE, GUBUN)
+			VALUES(
+			('REV'||LPAD(#{revId}, 5, '0')),
+			(SELECT MAX(pr.PRODUCT_ID)
+			FROM RESERVATION r JOIN PRODUCT_RESERVATION pr
+			ON r.SHOP_NO = pr.SHOP_NO
+			WHERE PRODUCT_ID = #{productId}),
+			#{emailId} ,
+			#{content}, sysdate, #{score}, 'B')
+	</insert>
+	
+	<insert id="setReviewFile">
+	<selectKey resultType="java.lang.Integer" keyProperty="fileId" order="BEFORE">
+		SELECT MAX(FILE_ID)+1 FROM FILE_INFO
+	</selectKey>
+		INSERT INTO FILE_INFO
+			VALUES(#{fileId},
+			#{fileName},
+			#{saveFileName}, 'N')
+	</insert>
+	
+	<insert id="setReviewFileConn">
+		INSERT INTO REVIEW_FILE
+		(SEQ, REV_ID, FILE_ID)
+		SELECT REVIEW_FILE_SEQ.NEXTVAL AS SEQ, 
+			(SELECT MAX(REV_ID) FROM REVIEW) AS REV_ID,
+			(SELECT MAX(FILE_ID) FROM FILE_INFO) AS FILE_ID
+		FROM DUAL
+	</insert>
+		
+	<update id="setReviewStatus">
+		UPDATE RESERVATION SET REVIEW_STATUS = 'Y'
+		WHERE RESERVNO = #{reservno}
+	</update>
+</mapper>

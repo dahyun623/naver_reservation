@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE configuration PUBLIC "-//mybatis.org//DTD Config 3.0//EN" "http://mybatis.org/dtd/mybatis-3-config.dtd" >
+<configuration>
+	<properties resource="properties/db.properties"/>
+	
+	<settings>
+		<setting name="mapUnderscoreToCamelCase" value="true"/>
+	</settings>
+	
+	<typeAliases>
+		<typeAlias type="com.min.edu.vo.Category" alias="cVo"/>
+		<typeAlias type="com.min.edu.vo.Event" alias="eVo"/>
+		<typeAlias type="com.min.edu.vo.FileInfo" alias="fVo"/>
+		<typeAlias type="com.min.edu.vo.Product" alias="pVo"/>
+		<typeAlias type="com.min.edu.vo.ProductReservation" alias="prVo"/>
+		<typeAlias type="com.min.edu.vo.Reservation" alias="rvVo"/>
+		<typeAlias type="com.min.edu.vo.Review" alias="rVo"/>
+	</typeAliases>
+	
+	<environments default="development">
+		<environment id="development">
+			<transactionManager type="JDBC"/>
+			<dataSource type="POOLED">
+				<property name="driver" value="${driver}"/>
+				<property name="url" value="${url}"/>
+				<property name="username" value="${user}"/>
+				<property name="password" value="${pw}"/>
+			</dataSource>
+		</environment>
+	</environments>
+	
+	<mappers>
+		<mapper resource="sqls/detail_statement.xml"/>
+		<mapper resource="sqls/main_statement.xml"/>
+		<mapper resource="sqls/reserve_statement.xml"/>
+		<mapper resource="sqls/review_statement.xml"/>
+		<mapper resource="sqls/user_statement.xml"/>
+	</mappers>
+</configuration>
+

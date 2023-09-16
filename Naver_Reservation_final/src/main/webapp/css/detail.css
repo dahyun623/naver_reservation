@@ -1,0 +1,29 @@
+@charset "UTF-8";
+
+.container_visual, .swiper-wrapper {
+	height: 414px;
+}
+
+.visual_txt {
+	font-size: 1.3rem;
+	line-height: normal;
+	position: absolute;
+	bottom: 170px;
+	left: 50%;
+	transform: translateX(-50%);
+	z-index: 1;
+	color: white;
+}
+
+.visual_txt_tit {
+	text-align: center;
+	font-weight: lighter;
+}
+
+.swiper-slide {
+	position: relative;
+}
+
+.swiper-button-prev, .swiper-button-next {
+	color: white;
+}

@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.min.edu.model.ReserveDaoImpl">
+
+	<resultMap type="prVo" id="productReserveMap">
+		<result column="RESERVATION_NAME" property="reservationName"/>
+		<result column="RESERVATION_CONTENT" property="reservationContent"/>
+		<result column="SHOP_NO" property="shopNo"/>
+		<result column="PRODUCT_ID" property="productId"/>
+		<result column="CLOSEDAYS" property="closedays"/>
+		<result column="ABLE_TIME" property="ableTime"/>
+		<result column="ABLETIME_COUNT" property="abletimeCount"/>
+		<collection property="fileInfo" resultMap="fileMap"></collection>
+	</resultMap>
+	
+	<resultMap type="fVo" id="fileMap">
+		<result column="FILE_ID" property="fileId"/>
+		<result column="FILE_NAME" property="fileName"/>
+		<result column="SAVE_FILE_NAME" property="saveFileName"/>
+	</resultMap>
+
+	<!-- 업체 이름, 업체 이미지 조회 -->
+	<select id="getShopDetail" parameterType="java.util.Map" resultMap="productReserveMap">
+		SELECT RESERVATION_NAME , RESERVATION_CONTENT ,fi.SAVE_FILE_NAME
+        	FROM PRODUCT_FILE pf 
+        		JOIN FILE_INFO fi ON pf.FILE_ID = fi.FILE_ID
+                JOIN PRODUCT_RESERVATION pr ON pf.PRODUCT_ID = pr.PRODUCT_ID
+            WHERE pf.PRODUCT_ID = #{productId}
+                AND pr.SHOP_NO = #{shopNo}
+	</select>
+	
+	<!-- 달력에 표기하기 위해, 업체의 휴무일 조회 -->
+	<select id="getShopCalendar" parameterType="java.util.Map" resultType="java.lang.String">
+		SELECT CLOSEDAYS
+        FROM CLOSEDAYS c JOIN PRODUCT_RESERVATION pr
+                ON c.SHOP_NO = pr.SHOP_NO
+        WHERE pr.PRODUCT_ID = #{productId}
+                AND pr.SHOP_NO = #{shopNo}
+	</select>
+	
+	<!-- 업체의 예약가능한 시간을 조회 -->
+	<select id="getProductTime" parameterType="java.util.Map" resultType="java.lang.String">
+		SELECT ABLE_TIME
+        FROM PRODUCT_RESERVATION pr JOIN ABLE_TIMES at2
+                ON pr.SHOP_NO = at2.SHOP_NO
+        WHERE pr.PRODUCT_ID = #{productId}
+                AND at2.SHOP_NO = #{shopNo}
+        ORDER BY ABLETIME_NO
+	</select>
+	
+	<!-- 예약하기에서 전달받은 예약 정보를 입력 -->
+	<insert id="setReservationInfo" parameterType="rvVo">
+		INSERT INTO REZ.RESERVATION 
+				(RESERVNO, SHOP_NO, "DAY", "TIME", RESERVATIONDATE,
+                 RESERVEMAIL, RESERVNAME, RESERVPHONE, PERSONCOUNT,
+                 REQUESTCONTENT, STATUS,REVIEW_STATUS)
+        VALUES(RESERVATION_SEQ.NEXTVAL, #{shopNo}, #{day}, #{time},
+        		 SYSDATE, #{reservEmail}, #{reservName}, #{reservPhone}, #{personCount},
+                 #{requestContent}, 'U','N')
+	</insert>
+	
+	<!-- 중복예약 방지를 위한 조회 쿼리 -->
+	<select id="getReservationStatus" parameterType="java.util.Map" resultType="rvVo">
+		SELECT "DAY", "TIME", RESERVEMAIL , RESERVNAME, RESERVPHONE
+		FROM RESERVATION r
+		WHERE "DAY" = #{day} AND TIME=#{time} AND SHOP_NO=#{shopNo}
+			AND RESERVEMAIL = #{reservEmail}
+	</select>
+	
+	<!-- 예약시간 선택시 해당 시간에 예약이 몇개 있는지 조회 -->
+	<select id="getReservationCount" parameterType="java.util.Map" resultType="java.lang.Integer">
+		SELECT ABLETIME_COUNT
+        FROM ABLE_TIMES at2
+        WHERE SHOP_NO =#{shopNo} AND ABLE_TIME =#{ableTime}
+	</select>
+
+
+	<!-- 예약 상품 리스트(메뉴 등) 출력-->
+	<select id="getReservationList" parameterType="java.lang.Integer" resultType="prVo">
+		SELECT SHOP_NO , PRODUCT_ID , RESERVATION_NAME , 
+				RESERVATION_CONTENT
+        FROM PRODUCT_RESERVATION pr
+        WHERE PRODUCT_ID = #{productId}
+        	AND RESERVE_STATUS ='Y'
+	</select>
+</mapper>

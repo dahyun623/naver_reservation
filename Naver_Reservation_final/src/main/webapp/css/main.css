@@ -1,0 +1,41 @@
+@charset "UTF-8";
+
+.container_visual{
+	position: relative;	
+}
+
+.prev_e, .nxt_e{
+	top: 0px;
+}
+
+.event .section_visual .group_visual .container_visual .prev_e{
+	left: 5%;
+}
+
+.prev_inn, .nxt_inn{
+	background-size: 180px 60px;
+	background-repeat: no-repeat;
+	width: 35px;
+	position: absolute;
+	top: 40%;
+	border-radius: 50%;
+	opacity: 0.5;
+}
+
+.prev_inn{
+	background-image: url(../img/spr_book_event.png);
+	background-position: -5px -3px;
+}
+
+.nxt_inn{
+	background-image: url(../img/spr_book_event.png);
+	background-position: -43px -3px;
+}
+
+.item:hover {
+	cursor: pointer;
+}
+
+.event .section_visual .group_visual .container_visual .visual_img .item-none{
+	display: none;
+}

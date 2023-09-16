@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.min.edu.model.UserDaoImpl">
+
+<resultMap type="com.min.edu.vo.Reservation" id="rDto">
+	<result column="RESERVNAME" property="reservName"/>
+	<result column="DAY" property="day"/>
+	<result column="TIME" property="time"/>
+	<result column="PERSONCOUNT" property="personCount"/>
+	<result column="REQUESTCONTENT" property="requestContent"/>
+	<result column="STATUS" property="status"/>
+	<result column="RESERVATIONDATE" property="reservationDate"/>
+	<result column="RESERVNO" property="reservNo"/>
+	<result column="REVIEW_STATUS" property="reviewStatus"/>
+	
+	<collection property="productDTO" resultMap="pDto"></collection>
+</resultMap>
+
+<resultMap type="com.min.edu.vo.Product" id="pDto">
+	<result column="ADDRESS" property="address"/>
+	<result column="PRODUCT_NAME" property="productName"/>
+	<result column="PRODUCT_ID" property="productId"/>
+</resultMap>
+
+	<select id="getMyReservationStatus" resultType="java.util.Map">
+		SELECT NVL(SUM(DECODE(STATUS, 'U', 1)),0) as U, NVL(SUM(DECODE(STATUS, 'R', 1)),0) as R,
+		NVL(SUM(DECODE(STATUS, 'A', 1)),0) as A, NVL(SUM(DECODE(STATUS, 'C', 1)),0) as C
+			FROM RESERVATION r
+			WHERE RESERVEMAIL = #{email}
+	</select>
+	
+	<select id="getMyReservationList" resultMap="rDto">
+		SELECT RESERVNAME,"DAY" ,"TIME",PERSONCOUNT ,REQUESTCONTENT,STATUS,
+		CASE STATUS WHEN 'U' THEN'1' WHEN 'R' THEN '2' WHEN 'C' THEN '3' WHEN 'A' THEN '4' END AS sort,
+		TO_CHAR(RESERVATIONDATE,'YYYYMMDDHH24MISS') AS RESERVATIONDATE
+		,RESERVNO ,REVIEW_STATUS,
+		p.ADDRESS ,p.PRODUCT_NAME,p.PRODUCT_ID
+			FROM RESERVATION r, PRODUCT_RESERVATION pr ,PRODUCT p
+				WHERE r.SHOP_NO  = pr.SHOP_NO 
+				AND pr.PRODUCT_ID =p.PRODUCT_ID 
+				AND r.RESERVEMAIL = #{email}
+				ORDER BY SORT ASC
+	</select>
+	<update id="getMyReservationCancle">
+		UPDATE RESERVATION SET STATUS = 'A'
+			WHERE RESERVATIONDATE = #{date}
+	</update>
+	
+	<update id="autoReservationStatus">
+		UPDATE RESERVATION SET STATUS = 'C'
+			<![CDATA[WHERE RESERVATIONDATE < TO_CHAR(SYSDATE, 'YYYYMMDD')]]>
+			AND STATUS = 'R'
+	</update>
+</mapper>
